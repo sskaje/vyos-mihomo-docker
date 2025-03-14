@@ -1,6 +1,19 @@
 
 # Clash Control for VyOS (Container)
 
+## Install
+
+Install to /config/clash
+
+```
+wget https://github.com/sskaje/vyos-mihomo-docker/archive/refs/heads/main.tar.gz
+mkdir -p /config/clash
+tar -C /config/clash -xvf main.tar.gz --strip=1
+```
+
+
+## Configurations
+
 
 ### Host Network + Tun Mode
 
