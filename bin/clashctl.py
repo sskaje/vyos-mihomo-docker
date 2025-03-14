@@ -272,7 +272,7 @@ def main():
     subparsers.add_parser("reload", help="Reload config")
     subparsers.add_parser("generate_config", help="Generate instance configuration")
     subparsers.add_parser("purge_cache", help="Remove cache.db and restart")
-    subparsers.add_parser("install", help="Install")
+    # subparsers.add_parser("install", help="Install")
     subparsers.add_parser("update_ui", help="Download Dashboard UI")
     subparsers.add_parser("show_ui", help="Show Dashboard UI URL")
     subparsers.add_parser("help", help="Show this message")
