@@ -1,0 +1,24 @@
+
+
+rule-providers:
+  mylocal:
+    type: file
+    path: /config/clash/config/utun0/rule-providers/local.yaml
+    interval: 600
+    behavior: classical
+    format: yaml
+    size-limit: 0
+
+  myadblock:
+    type: file
+    behavior: classical
+    path: /config/clash/config/utun0/rule-providers/myadblock.yaml
+    interval: 600
+
+  myreject:
+    type: http
+    behavior: domain
+    url: "https://p.rst.im/q/raw.githubusercontent.com/Loyalsoldier/clash-rules/release/reject.txt"
+    path: ./reject.yaml
+    interval: 86400
+    proxy: REJECT

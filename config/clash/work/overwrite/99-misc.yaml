@@ -1,0 +1,17 @@
+external-controller: "0.0.0.0:9090"
+secret: "123321"
+allow-lan: true
+#redir-port: 7892
+#tproxy-port: 7895
+mixed-port: 7893
+bind-address: "*"
+external-ui: "/root/.config/mihomo/ui"
+ipv6: false
+
+profile:
+  store-selected: true
+  store-fake-ip: false
+
+
+tcp-concurrent: true
+

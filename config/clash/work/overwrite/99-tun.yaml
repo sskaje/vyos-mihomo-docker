@@ -1,0 +1,9 @@
+tun:
+  device: utun0
+  auto-route: false
+  auto-detect-interface: false
+  enable: true
+  stack: system
+  dns-hijack:
+  - tcp://8.8.8.8:53
+  - tcp://8.8.4.4:53

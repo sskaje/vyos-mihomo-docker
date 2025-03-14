@@ -1,0 +1,15 @@
+proxy-groups:
+  - name: 'local-hk'
+    type: select
+    include-all: true
+    filter: "(?i)港|hk|hongkong|hong kong"
+#    filter: "(?i)HK-RG-AUTO"
+    url: 'https://www.gstatic.com/generate_204'
+    interval: 300
+  - name: 'local-japan'
+    type: select
+    include-all: true
+    filter: "(?i)本|jp|japan"
+#    filter: "(?i)JP-RG-AUTO"
+    url: 'https://www.gstatic.com/generate_204'
+    interval: 300
