@@ -183,7 +183,7 @@ class ClashControl:
                 self.deep_merge(value, node)
             elif isinstance(value, list):
                 # 如果值是列表，追加到目标列表中
-                if key in destination:
+                if key in destination and isinstance(destination[key], list):
                     destination[key].extend(value)
                 else:
                     destination[key] = value
