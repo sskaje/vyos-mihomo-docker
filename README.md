@@ -17,6 +17,8 @@ tar -C /config/clash -xvf main.tar.gz --strip=1
 
 ### Host Network + Tun Mode
 
+**DON'T USE `utun0` on VyOS, USE `tun0` !!**
+
 #### Config File
 
 /config/clash/work/overwrite/99-tun.yaml
@@ -81,15 +83,15 @@ set container registry docker.io mirror port '8088'
 Static Route
 ``` 
 # direct route entry
-set protocols static route 8.8.0.0/16 interface utun0
+set protocols static route 8.8.0.0/16 interface tun0
 # fake ip mode
-set protocols static route 198.18.0.0/16 interface utun0
+set protocols static route 198.18.0.0/16 interface tun0
 ```
 
 Static Route Table
 
 ``` 
-set protocols static table 20 route 8.8.0.0/16 interface utun0
+set protocols static table 20 route 8.8.0.0/16 interface tun0
 
 ```
 
@@ -122,9 +124,9 @@ set policy route ROUTE_CLASH_TUN rule 1000 set table '18'
 set policy route ROUTE_CLASH_TUN rule 1000 source group address-group 'SRC_CLASH'
 
 # Route table
-set protocols static table 18 route 0.0.0.0/0 next-hop 198.18.0.1 interface 'utun0'
+set protocols static table 18 route 0.0.0.0/0 next-hop 198.18.0.1 interface 'tun0'
 # default route table for all fake-ip 
-set protocols static route 198.18.0.0/15 interface utun0
+set protocols static route 198.18.0.0/15 interface tun0
 ```
 
 
@@ -147,6 +149,35 @@ save
 
 #### Create Rule
 
+
+
+### Local traffic
+
+``` 
+sudo nft add chain ip vyos_nat OUTPUT { type nat hook output priority -100 \; }
+
+sudo nft add rule ip vyos_nat OUTPUT ip daddr 127.0.0.1 tcp dport 53 dnat to 127.0.0.1:7874
+sudo nft add rule ip vyos_nat OUTPUT ip daddr 127.0.0.1 udp dport 53 dnat to 127.0.0.1:7874
+
+sudo nft add rule ip vyos_nat OUTPUT tcp dport 53 dnat to 127.0.0.1:7874
+sudo nft add rule ip vyos_nat OUTPUT udp dport 53 dnat to 127.0.0.1:7874
+
+
+sudo nft add rule ip vyos_nat OUTPUT tcp dport 53 dnat to 192.168.11.1:7874
+sudo nft add rule ip vyos_nat OUTPUT udp dport 53 dnat to 192.168.11.1:7874
+
+
+sudo nft add rule ip vyos_nat OUTPUT ip daddr 192.168.11.1 tcp dport 53 dnat to 192.168.11.1:7874
+sudo nft add rule ip vyos_nat OUTPUT ip daddr 192.168.11.1 udp dport 53 dnat to 192.168.11.1:7874
+
+
+sudo nft add rule ip vyos_nat OUTPUT ip daddr 192.168.11.3 tcp dport 53 dnat to 192.168.11.1:7874
+sudo nft add rule ip vyos_nat OUTPUT ip daddr 192.168.11.3 udp dport 53 dnat to 192.168.11.1:7874
+
+
+sudo nft flush chain ip vyos_nat OUTPUT
+
+```
 
 ## Update 
 

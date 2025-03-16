@@ -1,5 +1,5 @@
 tun:
-  device: utun0
+  device: tun0
   auto-route: false
   auto-detect-interface: false
   enable: true
