@@ -1,15 +1,19 @@
 proxy-groups:
   - name: 'local-hk'
-    type: select
+    type: url-test
     include-all: true
-    filter: "(?i)港|hk|hongkong|hong kong"
-#    filter: "(?i)HK-RG-AUTO"
+    filter: "(?i)港|[^-]hk|hongkong|hong kong"
     url: 'https://www.gstatic.com/generate_204'
     interval: 300
   - name: 'local-japan'
     type: select
     include-all: true
-    filter: "(?i)本|jp|japan"
-#    filter: "(?i)JP-RG-AUTO"
+    filter: "(?i)本|[^-]jp|japan"
+    url: 'https://www.gstatic.com/generate_204'
+    interval: 300
+  - name: 'local-tw'
+    type: select
+    include-all: true
+    filter: "(?i)台|[^-]tw|taiwan"
     url: 'https://www.gstatic.com/generate_204'
     interval: 300

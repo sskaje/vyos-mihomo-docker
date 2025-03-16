@@ -41,18 +41,18 @@ tun:
 #### Create Container
 ``` 
 configure
-set container name clash allow-host-networks
-set container name clash allow-host-pid
-set container name clash capability 'net-admin'
-set container name clash capability 'net-raw'
-set container name clash device dev-net-tun destination '/dev/net/tun'
-set container name clash device dev-net-tun source '/dev/net/tun'
-set container name clash image 'docker.io/metacubex/mihomo:latest'
-set container name clash label io.containers.autoupdate value 'registry'
-set container name clash restart 'always'
-set container name clash volume config destination '/root/.config/mihomo'
-set container name clash volume config mode 'rw'
-set container name clash volume config source '/config/clash/work'
+set container name mihomo allow-host-networks
+set container name mihomo allow-host-pid
+set container name mihomo capability 'net-admin'
+set container name mihomo capability 'net-raw'
+set container name mihomo device dev-net-tun destination '/dev/net/tun'
+set container name mihomo device dev-net-tun source '/dev/net/tun'
+set container name mihomo image 'docker.io/metacubex/mihomo:latest'
+set container name mihomo label io.containers.autoupdate value 'registry'
+set container name mihomo restart 'always'
+set container name mihomo volume config destination '/root/.config/mihomo'
+set container name mihomo volume config mode 'rw'
+set container name mihomo volume config source '/config/clash/work'
 
 # NAT
 set nat source rule 1201 outbound-interface name utun0
@@ -142,11 +142,11 @@ not tested yet
 #### Create Container
 ``` 
 configure
-set container name clash image 'docker.io/metacubex/mihomo:Alpha'
-set container name clash label io.containers.autoupdate value 'registry'
-set container name clash volume config destination '/root/.config/mihomo'
-set container name clash volume config mode 'rw'
-set container name clash volume config source '/config/clash/work'
+set container name mihomo image 'docker.io/metacubex/mihomo:Alpha'
+set container name mihomo label io.containers.autoupdate value 'registry'
+set container name mihomo volume config destination '/root/.config/mihomo'
+set container name mihomo volume config mode 'rw'
+set container name mihomo volume config source '/config/clash/work'
 commit
 save
 ```
@@ -184,12 +184,40 @@ sudo nft flush chain ip vyos_nat OUTPUT
 
 ```
 
-## Update 
+## Update Config 
+
+### Manually generate
+
+`/config/clash/bin/clashctl.py generate_config`
+
+### Manually reload
+
+`/config/clash/bin/clashctl.py reload`
+
+### Restart container
+
+Match your container name!
+
+`restart container mihomo`
+
+### Use task scheduler
 
 ``` 
 configure
-set system task-scheduler task update-clash-config executable path
-
+set system task-scheduler task update-mihomo-config executable path /config/clash/bin/clashctl.py
+set system task-scheduler task update-mihomo-config executable arguments rehash
+# 04:20 am everyday
+set system task-scheduler task update-mihomo-config crontab-spec "20 4 * * *"
 commit
 save
 ```
+
+## Custom config
+
+Keep your custom config files prefixed by a fixed width number, like 00-99.  
+
+Entries not named 'rules', load by name order. Entries named 'rules', last insert comes first.
+
+Check examples under 99-rules, 99-test.yaml will be the first rule, 01-myadblock.yaml will be second, rest from subscription files will be last.
+
+For other entries, config from subscription file always comes as first.

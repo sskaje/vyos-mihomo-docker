@@ -1,0 +1,2 @@
+rules:
+- DOMAIN-SUFFIX,some-not-exist.net,REJECT

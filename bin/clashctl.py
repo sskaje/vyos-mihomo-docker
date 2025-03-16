@@ -184,7 +184,11 @@ class ClashControl:
             elif isinstance(value, list):
                 # 如果值是列表，追加到目标列表中
                 if key in destination and isinstance(destination[key], list):
-                    destination[key].extend(value)
+                    if key == 'rules':
+                        # rule 时，永远是向前插入
+                        destination[key] = value + destination[key]
+                    else:
+                        destination[key] = destination[key] + value
                 else:
                     destination[key] = value
             else:
@@ -211,7 +215,7 @@ class ClashControl:
                     if config is not None:
                         merged_config = self.deep_merge(config, merged_config)
 
-        if os.path.exists(replace_directory):
+        if replace_directory and os.path.exists(replace_directory):
             # 获取目录下所有的 YAML 文件
             yaml_files = sorted(Path(replace_directory).rglob('*.yaml'), key=lambda p: str(p))
 
@@ -229,7 +233,27 @@ class ClashControl:
 --header 'Content-Type: application/json' \
 --data-raw '{"path": "/root/.config/clash/config.yaml"}'
 """
-        pass
+
+        with open(os.path.join(self.config_dir, self.subscription_file), 'r') as f:
+            cfg = yaml.safe_load(f)
+
+            if 'external-controller' not in cfg:
+                raise Exception('Missing external controller')
+
+            _, port = cfg['external-controller'].split(':')
+
+            url = f"http://localhost:{port}/configs"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {cfg['secret']}"
+            }
+            data = {
+                "path": "/root/.config/mihomo/config.yaml"
+            }
+
+            response = requests.put(url, json=data, headers=headers)
+
+            print(response.text)
 
     def generate_config(self, downloaded_file):
         with open(os.path.join(self.config_dir, self.subscription_file), 'w') as f:
@@ -245,6 +269,9 @@ class ClashControl:
 
     def cmd_status(self):
         self.run_container_op_command('ps')
+
+    def cmd_reload(self):
+        self.reload_config()
 
     def cmd_install_ui(self):
         self.install_ui()
@@ -292,10 +319,12 @@ def main():
             ctrl.cmd_restart()
         elif args.command == "status":
             ctrl.cmd_status()
+        elif args.command == "reload":
+            ctrl.cmd_reload()
         elif args.command == "rehash":
             downloaded_name = ctrl.download_subscription()
             ctrl.generate_config(downloaded_name)
-            # ctrl.cmd_restart()
+            ctrl.cmd_reload()
         elif args.command == "generate_config":
             downloaded_name = ctrl.latest_config_symlink
             ctrl.generate_config(downloaded_name)
