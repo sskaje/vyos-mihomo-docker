@@ -7,9 +7,14 @@ Install to /config/clash
 
 ```
 wget https://github.com/sskaje/vyos-mihomo-docker/archive/refs/heads/main.tar.gz
-mkdir -p /config/clash
-tar -C /config/clash -xvf main.tar.gz --strip=1
+mkdir tmp && tar -C tmp -xvf main.tar.gz --strip=1
+mv tmp/config/clash /config/
+mv tmp/bin/* /config/clash/bin/
+
 ```
+
+Edit `/config/clash/clash.ini` to use your subscription. Make sure to container matches your config tree entry.
+
 
 
 ## Configurations
