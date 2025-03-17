@@ -13,7 +13,7 @@ mv tmp/bin/* /config/clash/bin/
 
 ```
 
-Edit `/config/clash/clash.ini` to use your subscription. Make sure to container matches your config tree entry.
+Edit `/config/clash/clash.yaml` to use your subscription. Make sure to container matches your config tree entry.
 
 
 

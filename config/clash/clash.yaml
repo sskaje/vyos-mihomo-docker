@@ -1,0 +1,41 @@
+
+container:
+  # optional, clash image, default to docker.io/metacubex/mihomo:latest
+  image: docker.io/metacubex/mihomo:latest
+  # optional, container command, default to podman
+  command: podman
+  # optional, working dir inside container, default to /root/.config/mihomo/
+  workdir: /root/.config/mihomo/
+
+instance:
+  # required, your name under `container / name / {NAME}`
+  name: clash
+  # required, your subscription url
+  subscription: https://rst.im/clash/
+  # required, path to clash config/working directory
+  clash_root: /config/clash/work
+
+# processed after downloaded files and before local configs
+providers:
+- provider-type: proxy-providers
+  # name of proxy provider
+  name: test-provider
+  # type of proxy provider
+  type: http
+  # Proxy Provider URL
+  url: https://rst.im/clash/proxy-provider
+  # Create a new proxy group
+  create-proxy-group:
+    name: TEST-PROXY
+    type: select
+  # if create-proxy-group is set, entry can be appended to proxy-groups.proxies
+  add-proxies-to-proxy-group:
+  - UNMATCHED-PROXY
+  # Name of proxy-groups to update use fields
+  add-provider-to-proxy-group:
+  - DEFAULT-PROXY
+  - 🇭🇰 HK-RG-AUTO
+  # you can add all extra fields supported by proxy-providers
+
+
+

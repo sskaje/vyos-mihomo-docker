@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import configparser
 import os
 import shutil
 import subprocess
@@ -16,33 +15,39 @@ import yaml
 class ClashControlConfig:
 
     def __init__(self, config_path):
-        self.config = configparser.ConfigParser()
-        self.config.read(config_path)
+        with open(config_path) as f:
+            self.config = yaml.load(f, Loader=yaml.FullLoader)
 
     def get_container_command(self):
-        return self.config.get('container', 'command', fallback='podman')
+        return self.config.get('container', {}).get('command', 'podman')
 
     def get_container_image(self):
-        return self.config.get('container', 'image', fallback='docker.io/metacubex/mihomo:latest')
+        return self.config.get('container', {}).get('image', 'docker.io/metacubex/mihomo:latest')
 
     def get_container_workdir(self):
-        return self.config.get('container', 'workdir', fallback='/root/.config/mihomo/')
+        return self.config.get('container', {}).get('workdir', '/root/.config/mihomo/')
 
     def get_instance_name(self):
-        return self.config.get('instance', 'name')
+        return self.config.get('instance', {}).get('name')
 
     def get_subscription_url(self):
-        return self.config.get('instance', 'subscription')
+        return self.config.get('instance', {}).get('subscription')
 
     def get_clash_root(self):
-        return self.config.get('instance', 'clash_root')
+        return self.config.get('instance', {}).get('clash_root')
+
+    def get_providers(self, type_filter=None):
+        if type_filter is None:
+            return self.config.get('providers', [])
+        else:
+            return [x for x in self.config.get('providers', []) if x.get('provider-type', '') == type_filter]
 
 
 class ClashControl:
 
     clash_root = '/config/clash'
 
-    clash_config = clash_root + '/clash.ini'
+    clash_config = clash_root + '/clash.yaml'
 
     subscription_file = 'config.yaml'
 
@@ -204,6 +209,39 @@ class ClashControl:
             config = yaml.safe_load(f)
             if config is not None:
                 merged_config = self.deep_merge(config, merged_config)
+
+        # add to proxy-groups / * / use
+        for provider in self.config.get_providers('proxy-providers'):
+            del provider['provider-type']
+
+            if 'add-provider-to-proxy-group' in provider and 'proxy-groups' in merged_config:
+                for i in range(len(merged_config['proxy-groups'])):
+                    proxy_group = merged_config['proxy-groups'][i]
+                    for add_group in provider['add-provider-to-proxy-group']:
+                        if proxy_group['name'].strip() == add_group.strip():
+                            merged_config['proxy-groups'][i]['use'].append(provider['name'])
+                            break
+                del provider['add-provider-to-proxy-group']
+
+            if 'create-proxy-group' in provider:
+                provider['create-proxy-group']['use'] = [provider['name']]
+                merged_config['proxy-groups'].append(provider['create-proxy-group'])
+
+                if 'add-proxies-to-proxy-group' in provider:
+                    for i in range(len(merged_config['proxy-groups'])):
+                        proxy_group = merged_config['proxy-groups'][i]
+                        for add_group in provider['add-proxies-to-proxy-group']:
+                            if proxy_group['name'].strip() == add_group.strip():
+                                merged_config['proxy-groups'][i]['proxies'].append(provider['create-proxy-group']['name'])
+                                if provider['name'] not in merged_config['proxy-groups'][i]['use']:
+                                    merged_config['proxy-groups'][i]['use'].append(provider['name'])
+                                break
+
+                    del provider['add-proxies-to-proxy-group']
+
+                del provider['create-proxy-group']
+
+            merged_config['proxy-providers'][provider['name']] = provider
 
         if os.path.exists(merge_directory):
             # 获取目录下所有的 YAML 文件
