@@ -255,7 +255,7 @@ dns:
 Will get
 ``` 
 dns:
-  default-nameserver:
+  direct-nameserver:
   - 119.29.29.29
   - 114.114.114.114
   - 1.1.1.1
