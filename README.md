@@ -221,3 +221,42 @@ Entries not named 'rules', load by name order. Entries named 'rules', last inser
 Check examples under 99-rules, 99-test.yaml will be the first rule, 01-myadblock.yaml will be second, rest from subscription files will be last.
 
 For other entries, config from subscription file always comes as first.
+
+
+### Syntax
+
+`!replace` and `!delete` is supported to replace / delete whole entry
+
+Example: 
+
+``` 
+dns:
+  default-nameserver:
+  - 119.29.29.29
+  - 114.114.114.114
+```
+
++ 
+```
+root@vyos-rt:/config/clash/utun/overwrite# cat 89-dns-system.yaml
+dns:
+  direct-nameserver: !replace
+  - system
+```
+
+Will get `direct-nameserver` and `default-nameserver` replaced.
+
+If with 
+``` 
+dns:
+  direct-nameserver:
+  - 1.1.1.1
+```
+Will get
+``` 
+dns:
+  default-nameserver:
+  - 119.29.29.29
+  - 114.114.114.114
+  - 1.1.1.1
+```

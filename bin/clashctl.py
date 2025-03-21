@@ -12,6 +12,77 @@ from pathlib import Path
 import yaml
 
 
+class YAMLConfigMerger:
+    """
+    用于加载、处理和合并 YAML 配置文件，支持替换和删除操作
+    支持语法 !replace 和 !delete
+    """
+    def __init__(self):
+        # 注册 YAML 自定义标签
+        self._register_yaml_tags()
+
+    def _register_yaml_tags(self):
+        """注册 !replace 和 !delete 标签解析器"""
+        yaml.SafeLoader.add_constructor('!replace', self._replace_constructor)
+        yaml.SafeLoader.add_constructor('!delete', self._delete_constructor)
+
+    def _replace_constructor(self, loader, node):
+        """处理 !replace 标签，用于字典和列表的替换"""
+        if isinstance(node, yaml.MappingNode):
+            return self.ReplaceTag(loader.construct_mapping(node))
+        elif isinstance(node, yaml.SequenceNode):
+            return self.ReplaceTag(loader.construct_sequence(node))
+        else:
+            return loader.construct_scalar(node)
+
+    def _delete_constructor(self, loader, node):
+        """处理 !delete 标签，用于删除字典或列表中的项"""
+        return self.DeleteTag()
+
+    def deep_merge(self, source, destination):
+        """
+        深度合并两个字典，支持 !replace 和 !delete 语法
+        """
+        for key, value in source.items():
+            if isinstance(value, self.ReplaceTag):
+                destination[key] = value.value
+            elif isinstance(value, self.DeleteTag):
+                if key in destination:
+                    del destination[key]
+            elif isinstance(value, MutableMapping):
+                node = destination.setdefault(key, {})
+                self.deep_merge(value, node)
+            elif isinstance(value, list):
+                if key in destination and isinstance(destination[key], list):
+                    if key == 'rules':
+                        destination[key] = value + destination[key]
+                    else:
+                        destination[key] = destination[key] + value
+                else:
+                    destination[key] = value
+            else:
+                destination[key] = value
+        return destination
+
+    def load_yaml(self, yaml_content):
+        """加载 YAML 内容并返回字典"""
+        return yaml.load(yaml_content, Loader=yaml.SafeLoader)
+
+    def dump_yaml(self, data):
+        """将字典数据转换为 YAML 格式"""
+        return yaml.dump(data, allow_unicode=True)
+
+    class ReplaceTag:
+        """标记 !replace 语法，用于复杂结构的替换"""
+        def __init__(self, value):
+            self.value = value
+
+    class DeleteTag:
+        """标记 !delete 语法，用于删除字典或列表中的项"""
+        def __init__(self, value=None):
+            self.value = value
+
+
 class ClashControlConfig:
 
     def __init__(self, config_path):
@@ -177,38 +248,13 @@ class ClashControl:
             else:
                 raise Exception('Unable to verify subscription: Verification failed')
 
-    def deep_merge(self, source, destination):
-        """
-        深度合并两个字典
-        """
-        for key, value in source.items():
-            if isinstance(value, MutableMapping):
-                # 如果值是字典，递归合并
-                node = destination.setdefault(key, {})
-                self.deep_merge(value, node)
-            elif isinstance(value, list):
-                # 如果值是列表，追加到目标列表中
-                if key in destination and isinstance(destination[key], list):
-                    if key == 'rules':
-                        # rule 时，永远是向前插入
-                        destination[key] = value + destination[key]
-                    else:
-                        destination[key] = destination[key] + value
-                else:
-                    destination[key] = value
-            else:
-                # 否则直接覆盖
-                destination[key] = value
-        return destination
+    def load_yaml_files(self, downloaded_file, merge_directory):
+        config_merger = YAMLConfigMerger()
 
-    def load_yaml_files(self, downloaded_file, merge_directory, replace_directory=None):
-
-        # 加载所有 YAML 文件的内容
         merged_config = {}
+        # 加载所有 YAML 文件的内容
         with open(downloaded_file, 'r') as f:
-            config = yaml.safe_load(f)
-            if config is not None:
-                merged_config = self.deep_merge(config, merged_config)
+            merged_config = config_merger.load_yaml(f)
 
         # add to proxy-groups / * / use
         for provider in self.config.get_providers('proxy-providers'):
@@ -251,18 +297,7 @@ class ClashControl:
                 with open(file, 'r') as f:
                     config = yaml.safe_load(f)
                     if config is not None:
-                        merged_config = self.deep_merge(config, merged_config)
-
-        if replace_directory and os.path.exists(replace_directory):
-            # 获取目录下所有的 YAML 文件
-            yaml_files = sorted(Path(replace_directory).rglob('*.yaml'), key=lambda p: str(p))
-
-            for file in yaml_files:
-                with open(file, 'r') as f:
-                    config = yaml.safe_load(f)
-                    # replace config
-                    # if config is not None:
-                    #     merged_config = self.deep_merge(config, merged_config)
+                        merged_config = config_merger.deep_merge(config, merged_config)
 
         return merged_config
 
