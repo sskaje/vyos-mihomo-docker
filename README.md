@@ -231,12 +231,12 @@ Example:
 
 ``` 
 dns:
-  default-nameserver:
+  direct-nameserver:
   - 119.29.29.29
   - 114.114.114.114
 ```
 
-+ 
+\+ 
 ```
 root@vyos-rt:/config/clash/utun/overwrite# cat 89-dns-system.yaml
 dns:
@@ -244,7 +244,7 @@ dns:
   - system
 ```
 
-Will get `direct-nameserver` and `default-nameserver` replaced.
+Will get `direct-nameserver` replaced.
 
 If with 
 ``` 
