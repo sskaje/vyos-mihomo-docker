@@ -135,27 +135,6 @@ set protocols static route 198.18.0.0/15 interface tun0
 ```
 
 
-### MacVLAN + Any Mode
-
-not tested yet
-
-#### Create Container
-``` 
-configure
-set container name mihomo image 'docker.io/metacubex/mihomo:Alpha'
-set container name mihomo label io.containers.autoupdate value 'registry'
-set container name mihomo volume config destination '/root/.config/mihomo'
-set container name mihomo volume config mode 'rw'
-set container name mihomo volume config source '/config/clash/work'
-commit
-save
-```
-
-
-#### Create Rule
-
-
-
 ### Local traffic
 
 Wait for https://github.com/vyos/vyos-1x/pull/4391 
