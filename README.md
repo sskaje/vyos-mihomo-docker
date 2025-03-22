@@ -55,11 +55,11 @@ set container name mihomo volume config mode 'rw'
 set container name mihomo volume config source '/config/clash/work'
 
 # NAT
-set nat source rule 1201 outbound-interface name utun0
+set nat source rule 1201 outbound-interface name tun0
 set nat source rule 1201 translation address masquerade
 
 # Firewall
-set firewall zone WAN member interface utun0
+set firewall zone WAN member interface tun0
 
 commit
 save
@@ -203,7 +203,7 @@ dns:
 
 \+ 
 ```
-root@vyos-rt:/config/clash/utun/overwrite# cat 89-dns-system.yaml
+root@vyos-rt:/config/clash/work/overwrite# cat 89-dns-system.yaml
 dns:
   direct-nameserver: !replace
   - system
