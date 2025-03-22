@@ -30,7 +30,7 @@ Edit `/config/clash/clash.yaml` to use your subscription. Make sure to container
 
 ``` 
 tun:
-  device: utun0
+  device: tun0
   auto-route: false
   auto-detect-interface: false
   enable: true
