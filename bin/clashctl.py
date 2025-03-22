@@ -126,6 +126,7 @@ class ClashControl:
         "MetaCubeX/metacubexd",
         "haishanh/yacd",
         "ayanamist/clash-dashboard",
+        'Zephyruso/zashboard'
     ]
 
     config_test_dir = '/tmp/clash-config-test'

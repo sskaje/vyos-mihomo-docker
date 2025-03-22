@@ -129,7 +129,7 @@ set policy route ROUTE_CLASH_TUN rule 1000 set table '18'
 set policy route ROUTE_CLASH_TUN rule 1000 source group address-group 'SRC_CLASH'
 
 # Route table
-set protocols static table 18 route 0.0.0.0/0 next-hop 198.18.0.1 interface 'tun0'
+set protocols static table 18 route 0.0.0.0/0 interface 'tun0'
 # default route table for all fake-ip 
 set protocols static route 198.18.0.0/15 interface tun0
 ```
@@ -158,29 +158,15 @@ save
 
 ### Local traffic
 
+Wait for https://github.com/vyos/vyos-1x/pull/4391 
+
+Or
+
 ``` 
 sudo nft add chain ip vyos_nat OUTPUT { type nat hook output priority -100 \; }
 
 sudo nft add rule ip vyos_nat OUTPUT ip daddr 127.0.0.1 tcp dport 53 dnat to 127.0.0.1:7874
 sudo nft add rule ip vyos_nat OUTPUT ip daddr 127.0.0.1 udp dport 53 dnat to 127.0.0.1:7874
-
-sudo nft add rule ip vyos_nat OUTPUT tcp dport 53 dnat to 127.0.0.1:7874
-sudo nft add rule ip vyos_nat OUTPUT udp dport 53 dnat to 127.0.0.1:7874
-
-
-sudo nft add rule ip vyos_nat OUTPUT tcp dport 53 dnat to 192.168.11.1:7874
-sudo nft add rule ip vyos_nat OUTPUT udp dport 53 dnat to 192.168.11.1:7874
-
-
-sudo nft add rule ip vyos_nat OUTPUT ip daddr 192.168.11.1 tcp dport 53 dnat to 192.168.11.1:7874
-sudo nft add rule ip vyos_nat OUTPUT ip daddr 192.168.11.1 udp dport 53 dnat to 192.168.11.1:7874
-
-
-sudo nft add rule ip vyos_nat OUTPUT ip daddr 192.168.11.3 tcp dport 53 dnat to 192.168.11.1:7874
-sudo nft add rule ip vyos_nat OUTPUT ip daddr 192.168.11.3 udp dport 53 dnat to 192.168.11.1:7874
-
-
-sudo nft flush chain ip vyos_nat OUTPUT
 
 ```
 
