@@ -225,3 +225,17 @@ dns:
   - 114.114.114.114
   - 1.1.1.1
 ```
+
+### Use PPPoE DNS
+
+Use host `/etc/ppp/resolv.conf` to replace `/etc/resolv.conf` in container.
+
+``` 
+configure
+set container name clash volume resolv destination /etc/resolv.conf
+set container name clash volume resolv source /etc/ppp/resolv.conf
+set container name clash volume resolv mode ro
+commit
+save
+```
+
