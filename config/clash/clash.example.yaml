@@ -24,11 +24,20 @@ providers:
   type: http
   # Proxy Provider URL
   url: https://rst.im/clash/proxy-provider
-  # Create a new proxy group
+  # Create a new proxy group (single format, backward compatible)
+  # You can also use list format to create multiple proxy groups:
+  # create-proxy-group:
+  #   - name: TEST-PROXY-1
+  #     type: select
+  #   - name: TEST-PROXY-2
+  #     type: url-test
+  #     url: 'https://www.gstatic.com/generate_204'
+  #     interval: 300
   create-proxy-group:
     name: TEST-PROXY
     type: select
   # if create-proxy-group is set, entry can be appended to proxy-groups.proxies
+  # When multiple proxy groups are created, all of them will be added to the target groups
   add-proxies-to-proxy-group:
   - UNMATCHED-PROXY
   # Name of proxy-groups to update use fields
@@ -36,6 +45,28 @@ providers:
   - DEFAULT-PROXY
   - 🇭🇰 HK-RG-AUTO
   # you can add all extra fields supported by proxy-providers
+
+# Example: Multiple proxy groups from one provider
+# - provider-type: proxy-providers
+#   name: multi-group-provider
+#   type: http
+#   url: https://rst.im/clash/proxy-provider
+#   # Create multiple proxy groups using list format
+#   create-proxy-group:
+#     - name: HK-SELECT
+#       type: select
+#     - name: HK-URL-TEST
+#       type: url-test
+#       url: 'https://www.gstatic.com/generate_204'
+#       interval: 300
+#       filter: "(?i)港|[^-]hk|hongkong"
+#     - name: JP-SELECT
+#       type: select
+#       filter: "(?i)本|[^-]jp|japan"
+#   add-proxies-to-proxy-group:
+#     - UNMATCHED-PROXY
+#   add-provider-to-proxy-group:
+#     - DEFAULT-PROXY
 
 
 

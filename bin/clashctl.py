@@ -271,15 +271,32 @@ class ClashControl:
                 del provider['add-provider-to-proxy-group']
 
             if 'create-proxy-group' in provider:
-                provider['create-proxy-group']['use'] = [provider['name']]
-                merged_config['proxy-groups'].append(provider['create-proxy-group'])
+                # 支持单个字典（向后兼容）和列表（新功能）两种格式
+                proxy_groups_to_create = provider['create-proxy-group']
+                if isinstance(proxy_groups_to_create, dict):
+                    # 单个字典格式，转换为列表以便统一处理
+                    proxy_groups_to_create = [proxy_groups_to_create]
+                elif not isinstance(proxy_groups_to_create, list):
+                    # 如果不是字典也不是列表，跳过
+                    proxy_groups_to_create = []
 
+                # 为每个 proxy group 设置 use 字段并添加到配置中
+                created_group_names = []
+                for proxy_group in proxy_groups_to_create:
+                    proxy_group['use'] = [provider['name']]
+                    merged_config['proxy-groups'].append(proxy_group)
+                    created_group_names.append(proxy_group['name'])
+
+                # 处理 add-proxies-to-proxy-group
                 if 'add-proxies-to-proxy-group' in provider:
                     for i in range(len(merged_config['proxy-groups'])):
                         proxy_group = merged_config['proxy-groups'][i]
                         for add_group in provider['add-proxies-to-proxy-group']:
                             if proxy_group['name'].strip() == add_group.strip():
-                                merged_config['proxy-groups'][i]['proxies'].append(provider['create-proxy-group']['name'])
+                                # 将所有创建的 proxy group 名称添加到目标 group 的 proxies 中
+                                for created_name in created_group_names:
+                                    if created_name not in merged_config['proxy-groups'][i]['proxies']:
+                                        merged_config['proxy-groups'][i]['proxies'].append(created_name)
                                 if provider['name'] not in merged_config['proxy-groups'][i]['use']:
                                     merged_config['proxy-groups'][i]['use'].append(provider['name'])
                                 break
