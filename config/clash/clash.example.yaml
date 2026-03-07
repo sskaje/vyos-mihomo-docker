@@ -20,10 +20,15 @@ providers:
 - provider-type: proxy-providers
   # name of proxy provider
   name: test-provider
-  # type of proxy provider
+  # type of proxy provider, http, file, etc.
   type: http
   # Proxy Provider URL
   url: https://rst.im/clash/proxy-provider
+  # local path to proxy provider config
+  path: ./profiles/proxy_providers/test-provider.yaml
+  # optional, use override (supported by mihomo) to set dialer-proxy
+  #override:
+  #  dialer-proxy: PROXY
   # Create a new proxy group (single format, backward compatible)
   # You can also use list format to create multiple proxy groups:
   # create-proxy-group:
@@ -36,26 +41,24 @@ providers:
   create-proxy-group:
     name: TEST-PROXY
     type: select
-  # if create-proxy-group is set, entry can be appended to proxy-groups.proxies
-  # When multiple proxy groups are created, all of them will be added to the target groups
+  # Add this provider's proxy nodes to these groups (their use field)
   add-proxies-to-proxy-group:
   - UNMATCHED-PROXY
-  # Name of proxy-groups to update use fields
+  # deprecated: add created group(s) to these groups' proxies; use add-to-proxy-group instead
   add-provider-to-proxy-group:
   - DEFAULT-PROXY
   - 🇭🇰 HK-RG-AUTO
   # you can add all extra fields supported by proxy-providers
 
-# Example: Multiple proxy groups from one provider
+# Example: Multiple proxy groups + add-to-proxy-group (runs after all providers, cross-ref ok)
 # - provider-type: proxy-providers
 #   name: multi-group-provider
 #   type: http
 #   url: https://rst.im/clash/proxy-provider
-#   # Create multiple proxy groups using list format
 #   create-proxy-group:
 #     - name: HK-SELECT
 #       type: select
-#     - name: HK-URL-TEST
+#     - name: HK-AUTO
 #       type: url-test
 #       url: 'https://www.gstatic.com/generate_204'
 #       interval: 300
@@ -63,8 +66,12 @@ providers:
 #     - name: JP-SELECT
 #       type: select
 #       filter: "(?i)本|[^-]jp|japan"
-#   add-proxies-to-proxy-group:
-#     - UNMATCHED-PROXY
+#   # add-to-proxy-group: target group name -> list of group names to add to its proxies
+#   # applied after all providers' create-proxy-group, so you can reference groups from other providers
+#   add-to-proxy-group:
+#     UNMATCHED-PROXY: [HK-SELECT, HK-AUTO, JP-SELECT]
+#     HK-SELECT: [HK-AUTO]
+#   # deprecated: same as add-to-proxy-group: DEFAULT-PROXY: [HK-SELECT, HK-AUTO, JP-SELECT]
 #   add-provider-to-proxy-group:
 #     - DEFAULT-PROXY
 

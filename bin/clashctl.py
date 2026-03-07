@@ -257,55 +257,70 @@ class ClashControl:
         with open(downloaded_file, 'r') as f:
             merged_config = config_merger.load_yaml(f)
 
-        # add to proxy-groups / * / use
+        # 全局：把「创建的组」加入目标组的 proxies，在所有 create-proxy-group 之后统一应用，支持交叉放组
+        global_add_to_proxy_groups = {}  # target_name -> [group_name, ...]
+
         for provider in self.config.get_providers('proxy-providers'):
             del provider['provider-type']
 
-            if 'add-provider-to-proxy-group' in provider and 'proxy-groups' in merged_config:
+            # add-proxies-to-proxy-group: 把本 provider 的 proxy（节点）加到指定组 → 只改 use
+            if 'add-proxies-to-proxy-group' in provider and 'proxy-groups' in merged_config:
                 for i in range(len(merged_config['proxy-groups'])):
                     proxy_group = merged_config['proxy-groups'][i]
-                    for add_group in provider['add-provider-to-proxy-group']:
+                    for add_group in provider['add-proxies-to-proxy-group']:
                         if proxy_group['name'].strip() == add_group.strip():
                             merged_config['proxy-groups'][i]['use'].append(provider['name'])
                             break
-                del provider['add-provider-to-proxy-group']
+                del provider['add-proxies-to-proxy-group']
 
             if 'create-proxy-group' in provider:
                 # 支持单个字典（向后兼容）和列表（新功能）两种格式
                 proxy_groups_to_create = provider['create-proxy-group']
                 if isinstance(proxy_groups_to_create, dict):
-                    # 单个字典格式，转换为列表以便统一处理
                     proxy_groups_to_create = [proxy_groups_to_create]
                 elif not isinstance(proxy_groups_to_create, list):
-                    # 如果不是字典也不是列表，跳过
                     proxy_groups_to_create = []
 
-                # 为每个 proxy group 设置 use 字段并添加到配置中
                 created_group_names = []
                 for proxy_group in proxy_groups_to_create:
                     proxy_group['use'] = [provider['name']]
                     merged_config['proxy-groups'].append(proxy_group)
                     created_group_names.append(proxy_group['name'])
 
-                # 处理 add-proxies-to-proxy-group
-                if 'add-proxies-to-proxy-group' in provider:
-                    for i in range(len(merged_config['proxy-groups'])):
-                        proxy_group = merged_config['proxy-groups'][i]
-                        for add_group in provider['add-proxies-to-proxy-group']:
-                            if proxy_group['name'].strip() == add_group.strip():
-                                # 将所有创建的 proxy group 名称添加到目标 group 的 proxies 中
-                                for created_name in created_group_names:
-                                    if created_name not in merged_config['proxy-groups'][i]['proxies']:
-                                        merged_config['proxy-groups'][i]['proxies'].append(created_name)
-                                if provider['name'] not in merged_config['proxy-groups'][i]['use']:
-                                    merged_config['proxy-groups'][i]['use'].append(provider['name'])
-                                break
-
-                    del provider['add-proxies-to-proxy-group']
+                # deprecated: add-provider-to-proxy-group = 把本 provider 创建的组加入指定组的 proxies
+                # 兼容保留；推荐用 add-to-proxy-groups
+                if 'add-provider-to-proxy-group' in provider:
+                    for add_group in provider['add-provider-to-proxy-group']:
+                        t = add_group.strip()
+                        global_add_to_proxy_groups.setdefault(t, []).extend(created_group_names)
+                    del provider['add-provider-to-proxy-group']
 
                 del provider['create-proxy-group']
 
+            # add-to-proxy-group: 目标 → 要加入的 group 名列表（可跨 provider 交叉引用）
+            if 'add-to-proxy-group' in provider:
+                for target_name, names in provider['add-to-proxy-group'].items():
+                    t = target_name.strip() if isinstance(target_name, str) else target_name
+                    if not isinstance(names, list):
+                        names = [names]
+                    global_add_to_proxy_groups.setdefault(t, []).extend(
+                        n.strip() if isinstance(n, str) else n for n in names
+                    )
+                del provider['add-to-proxy-group']
+
             merged_config['proxy-providers'][provider['name']] = provider
+
+        # 顺序靠后：所有 provider 的 create 都完成后，再统一把 group 名加入目标 proxies
+        if global_add_to_proxy_groups and 'proxy-groups' in merged_config:
+            group_index = {g['name'].strip(): i for i, g in enumerate(merged_config['proxy-groups'])}
+            for target_name, names in global_add_to_proxy_groups.items():
+                idx = group_index.get(target_name.strip() if isinstance(target_name, str) else target_name)
+                if idx is not None:
+                    proxies = merged_config['proxy-groups'][idx].setdefault('proxies', [])
+                    for n in names:
+                        name = n.strip() if isinstance(n, str) else n
+                        if name not in proxies:
+                            proxies.append(name)
 
         if os.path.exists(merge_directory):
             # 获取目录下所有的 YAML 文件
